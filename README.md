@@ -36,7 +36,7 @@ Set the content of the `binding.gyp` file:
 }
 ```
 
-Once node dependencies are set, you're gppd to `configure`:
+Once node dependencies are set, you're good to `configure`:
 
 ```bash
 npx node-gyp configure
@@ -44,5 +44,11 @@ npx node-gyp configure
 
 ## How to build
 
-Check over the project branches so you can see how small and big things are made
+Check the project branches, so you can see how small and big things are made
 using native code and node.
+
+## Further reading
+
+- Node Addons APU
+- Modern C++
+-
