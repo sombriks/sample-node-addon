@@ -49,6 +49,6 @@ using native code and node.
 
 ## Further reading
 
-- Node Addons APU
-- Modern C++
+- [Node Addons API](https://nodejs.org/api/addons.html)
+- [Modern C++](https://github.com/federico-busato/Modern-CPP-Programming)
 -
