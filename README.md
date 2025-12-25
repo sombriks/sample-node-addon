@@ -7,7 +7,7 @@ node runtime.
 
 - Node 22
 - C++ compiler compatible with modern (C++20) standard, like gcc or clang
-- Make
+- GNU Make
 - Python 3.12 or newer
 
 ## Initial setup
@@ -18,6 +18,8 @@ npm i bindings
 npm i -D node-gyp ava
 mkdir src lib test
 touch src/main.cc
+touch src/hello.cc
+touch src/hello-method.cc
 touch lib/main.js
 touch test/main.spec.js
 touch binding.gyp
@@ -120,6 +122,14 @@ But a few more steps remain.
 You must list all your source files.
 
 You can also define some compiler flags.
+
+Next, clean upm configure and build:
+
+```bash
+npx node-gyp clean
+npx node-gyp configure
+npx node-gyp build
+```
 
 ### Call your hello world
 
