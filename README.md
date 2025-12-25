@@ -36,6 +36,8 @@ Set the content of the `binding.gyp` file:
 }
 ```
 
+_the target name must not contain '-'._
+
 Once node dependencies are set, you're good to `configure`:
 
 ```bash
