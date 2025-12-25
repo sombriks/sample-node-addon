@@ -74,4 +74,5 @@ You can make them scripts inside `package.json` for better ergonomics.
 
 - [Node Addons API](https://nodejs.org/api/addons.html)
 - [Modern C++](https://github.com/federico-busato/Modern-CPP-Programming)
+- [Mode module system](https://nodejs.org/api/packages.html)
 -
