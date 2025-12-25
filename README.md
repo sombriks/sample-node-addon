@@ -90,8 +90,8 @@ And the implementation:
 
 ```cpp
 // src/counter.cc
-#include <iostream>
 
+#include <iostream>
 #include "counter.hh"
 
 Counter::Counter() : count(0)
@@ -128,13 +128,46 @@ int Counter::getCount()
 }
 ```
 
-Like you did with the function, you must wrap your counter using the node addon
-API:
+Like as you did with the function, you must wrap your counter using the node
+addon API:
 
 ```cpp
 // src/counter-object.hh
+#ifndef COUNTER_OBJECT_HH
+#define COUNTER_OBJECT_HH
 
+#include <node.h>
+#include <node_object_wrap.h>
+
+#include "counter.hh"
+
+class CounterObject : public node::ObjectWrap
+{
+public:
+  static void Init(v8::Local<v8::Object> exports);
+
+private:
+  Counter *counter;
+  explicit CounterObject();
+  ~CounterObject();
+
+  static void New(const v8::FunctionCallbackInfo<v8::Value> &args);
+  static void Increment(const v8::FunctionCallbackInfo<v8::Value> &args);
+  static void Decrement(const v8::FunctionCallbackInfo<v8::Value> &args);
+  static void GetCount(const v8::FunctionCallbackInfo<v8::Value> &args);
+};
+
+#endif // COUNTER_OBJECT_HH
 ```
+
+This will be the default structure for wrappers:
+
+- extra `<node_object_wrap.h>` header file
+- the `static void Init(v8::Local<v8::Object> exports);` as sole public native
+  interface
+- actual wrapped interface as private, static methods
+- The `static void New(const v8::FunctionCallbackInfo<v8::Value> &args);` to
+  define a proper constructor for your wrapped object
 
 The implementation follows:
 

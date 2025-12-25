@@ -1,5 +1,6 @@
 // src/counter.cc
 
+#include <iostream>
 #include "counter.hh"
 
 Counter::Counter() : count(0)
