@@ -144,6 +144,9 @@ const addon = bindings("sample_node_addon");
 console.log("addon.hello():", addon.hello());
 ```
 
+The [bindings](https://github.com/TooTallNate/node-bindings) dependency helps to
+locate the correct binary over the platforms.
+
 Before finally run, make sure you have enabled the `import module` style on the
 project:
 
