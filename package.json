@@ -4,7 +4,10 @@
   "description": "sample code exploring distinct scenarios of the C++ / javascript bridge in the node runtime",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "configure": "node-gyp configure",
+    "clean": "node-gyp clean",
+    "build": "node-gyp build",
+    "ccb": "node-gyp clean ; node-gyp configure ; node-gyp build"
   },
   "repository": {
     "type": "git",

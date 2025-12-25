@@ -1,6 +1,6 @@
 #include <string>
 
-export std::string hello() 
+std::string hello() 
 {
   return std::string("hello world!");
 }
