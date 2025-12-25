@@ -1,4 +1,4 @@
-# sample-node-addon
+# [sample-node-addon](https://github.com/sombriks/sample-node-addon)
 
 Sample code exploring distinct scenarios of the C++ / javascript bridge in the
 node runtime.
@@ -6,7 +6,7 @@ node runtime.
 ## Requirements
 
 - Node 22
-- C compiler compatible with modern (C++20) standard, like gcc
+- C++ compiler compatible with modern (C++20) standard, like gcc or clang
 - Make
 - Python 3.12 or newer
 
@@ -29,7 +29,7 @@ Set the content of the `binding.gyp` file:
 {
   "targets": [
     {
-      "target_name": "my-addon",
+      "target_name": "sample-node-addon",
       "sources": [ "src/main.cc" ]
     }
   ]
@@ -45,7 +45,12 @@ npx node-gyp configure
 ## How to build
 
 Check the project branches, so you can see how small and big things are made
-using native code and node.
+using C++ native code and node.
+
+- basic boilerplate
+- functions
+- objects
+- callbacks
 
 ## Further reading
 
