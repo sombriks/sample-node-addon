@@ -42,15 +42,31 @@ Once node dependencies are set, you're good to `configure`:
 npx node-gyp configure
 ```
 
-## How to build
+## Basic Boilerplate
 
-Check the project branches, so you can see how small and big things are made
-using C++ native code and node.
+In order to expose native calls to the node runtime, yo must define a module:
 
-- basic boilerplate
-- functions
-- objects
-- callbacks
+```cpp
+#include <node.h>
+
+void Initialize(v8::Local<v8::Object> exports)
+{
+  // This is where you would add your addon initialization code.
+}
+
+NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)
+```
+
+Also, whenever deep changes occur in the code or node-gyp configuration,
+run the following commands:
+
+```bash
+nxp node-gyp clean;
+nxp node-gyp configure;
+nxp node-gyp build;
+```
+
+You can make them scripts inside `package.json` for better ergonomics.
 
 ## Further reading
 
