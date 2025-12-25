@@ -147,14 +147,14 @@ public:
   static void Init(v8::Local<v8::Object> exports);
 
 private:
-  Counter *counter;
-  explicit CounterObject();
-  ~CounterObject();
-
   static void New(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void Increment(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void Decrement(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void GetCount(const v8::FunctionCallbackInfo<v8::Value> &args);
+
+  ~CounterObject();
+  explicit CounterObject();
+  Counter *counter;
 };
 
 #endif // COUNTER_OBJECT_HH
@@ -174,13 +174,155 @@ The implementation follows:
 ```cpp
 // src/counter-object.cc
 
+#include "counter-object.hh"
+
+CounterObject::CounterObject()
+{
+  counter = new Counter();
+}
+
+CounterObject::~CounterObject()
+{
+  delete counter;
+}
+
+void CounterObject::GetCount(const v8::FunctionCallbackInfo<v8::Value> &args)
+{
+  v8::Isolate *isolate = args.GetIsolate();
+  CounterObject *obj = ObjectWrap::Unwrap<CounterObject>(args.Holder());
+  int count = obj->counter->getCount();
+  args.GetReturnValue().Set(v8::Number::New(isolate, count));
+}
+
+void CounterObject::Decrement(const v8::FunctionCallbackInfo<v8::Value> &args)
+{
+  CounterObject *obj = ObjectWrap::Unwrap<CounterObject>(args.Holder());
+  obj->counter->decrement();
+}
+
+void CounterObject::Increment(const v8::FunctionCallbackInfo<v8::Value> &args)
+{
+  CounterObject *obj = ObjectWrap::Unwrap<CounterObject>(args.Holder());
+  obj->counter->increment();
+}
+
+void CounterObject::New(const v8::FunctionCallbackInfo<v8::Value> &args)
+{
+  if (args.IsConstructCall())
+  {
+    CounterObject *obj = new CounterObject();
+    obj->Wrap(args.This());
+    args.GetReturnValue().Set(args.This());
+  }
+  else
+  {
+    // Invoked as plain function `MyObject(...)`, turn into construct call.
+    // we could just throw an error, but let's be more friendly.
+    //
+    // grab a context
+    v8::Local<v8::Context> context = args.GetIsolate()->GetCurrentContext();
+    // create a new arguments array
+    const int argc = 1;
+    v8::Local<v8::Value> argv[argc] = {args[0]};
+    // lots of casts to get the the function call
+    v8::Local<v8::Function> cons =
+        args.Data()
+            .As<v8::Object>()
+            ->GetInternalField(0)
+            .As<v8::Value>()
+            .As<v8::Function>();
+    // invoke as constructor
+    v8::Local<v8::Object> result =
+        cons->NewInstance(context, argc, argv).ToLocalChecked();
+    args.GetReturnValue().Set(result);
+  }
+}
+
+void CounterObject::Init(v8::Local<v8::Object> exports)
+{
+  v8::Isolate *isolate = exports->GetIsolate();
+
+  // Prepare constructor template
+  v8::Local<v8::FunctionTemplate> tpl =
+      v8::FunctionTemplate::New(isolate, CounterObject::New, exports);
+  tpl->SetClassName(v8::String::NewFromUtf8(isolate, "Counter").ToLocalChecked());
+  tpl->InstanceTemplate()->SetInternalFieldCount(1);
+
+  // Prototype
+  NODE_SET_PROTOTYPE_METHOD(tpl, "increment", CounterObject::Increment);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "decrement", CounterObject::Decrement);
+  NODE_SET_PROTOTYPE_METHOD(tpl, "getCount", CounterObject::GetCount);
+
+  v8::Local<v8::Function> constructor =
+      tpl->GetFunction(isolate->GetCurrentContext()).ToLocalChecked();
+  // Store the constructor in the exports object
+  exports
+      ->Set(isolate->GetCurrentContext(),
+            v8::String::NewFromUtf8(isolate, "Counter").ToLocalChecked(),
+            constructor)
+      .Check();
+}
 ```
+
+Verbose, but not hard.
 
 Then registry the wrapper in the module:
 
 ```cpp
-//src/main.cc
+// src/main.cc
 
+#include <node.h>
+#include "counter-object.hh"
+
+// function prototype, can reside into a header file
+void HelloMethod(const v8::FunctionCallbackInfo<v8::Value> &);
+
+void Initialize(v8::Local<v8::Object> exports)
+{
+  NODE_SET_METHOD(exports, "hello", HelloMethod);
+  CounterObject::Init(exports);
+}
+
+NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)
+```
+
+## Running the sample
+
+Modify the `lib/main.js` to see the magic happening:
+
+```javascript
+// lib/main.js
+import bindings from "bindings";
+
+const addon = bindings("sample_node_addon");
+
+let counter = new addon.Counter();
+console.log("Initial count:", counter.getCount());
+
+counter.increment();
+console.log("After increment:", counter.getCount());
+
+counter.increment();
+console.log("After another increment:", counter.getCount());
+
+counter.decrement();
+console.log("After decrement:", counter.getCount());
+
+if(global.gc) {
+  counter = null;
+  console.log("Triggering garbage collection...");
+  global.gc();
+  console.log("Counter object deleted.");
+}
+
+console.log("addon.hello():", addon.hello());
+```
+
+To check if the native object is properly destroyed, run the script using the
+`--expose-gc` flag:
+
+```bash
+node --expose-gc lib/main.js
 ```
 
 ## Further reading

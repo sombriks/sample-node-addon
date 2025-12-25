@@ -13,14 +13,14 @@ public:
   static void Init(v8::Local<v8::Object> exports);
 
 private:
-  Counter *counter;
-  explicit CounterObject();
-  ~CounterObject();
-
   static void New(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void Increment(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void Decrement(const v8::FunctionCallbackInfo<v8::Value> &args);
   static void GetCount(const v8::FunctionCallbackInfo<v8::Value> &args);
+
+  ~CounterObject();
+  explicit CounterObject();
+  Counter *counter;
 };
 
 #endif // COUNTER_OBJECT_HH
