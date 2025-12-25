@@ -48,6 +48,18 @@ npx node-gyp configure
 
 Once the entrypoint for the module is configured, we can add our functions into it.
 
+Let's start with this hello world here:
+
+```cpp
+// hello.cc
+#include <string>
+
+export std::string hello() 
+{
+  return std::string("hello world!");
+}
+```
+
 ## Further reading
 
 - [Node Addons API](https://nodejs.org/api/addons.html)
