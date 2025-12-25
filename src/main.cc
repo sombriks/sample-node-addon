@@ -1,4 +1,5 @@
-// main.cc
+// src/main.cc
+
 #include <node.h>
 
 // function prototype, can reside into a header file

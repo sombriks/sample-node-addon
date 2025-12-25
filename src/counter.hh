@@ -2,6 +2,8 @@
 #ifndef COUNTER_HH
 #define COUNTER_HH
 
+#include <iostream>
+
 class Counter
 {
 private:

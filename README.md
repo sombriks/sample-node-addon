@@ -38,6 +38,7 @@ Set the content of the `binding.gyp` file:
             "target_name": "sample_node_addon",
             "cflags": ["-std=c++20"],
             "sources": [
+                "src/counter-object.cc",
                 "src/counter.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
@@ -131,6 +132,13 @@ Like you did with the function, you must wrap your counter using the node addon
 API:
 
 ```cpp
+// src/counter-object.hh
+
+```
+
+The implementation follows:
+
+```cpp
 // src/counter-object.cc
 
 ```
@@ -147,4 +155,5 @@ Then registry the wrapper in the module:
 - [Node Addons API](https://nodejs.org/api/addons.html)
 - [Modern C++](https://github.com/federico-busato/Modern-CPP-Programming)
 - [Mode module system](https://nodejs.org/api/packages.html)
+- [V8 guide](https://v8docs.nodesource.com/node-22.4/)
 -

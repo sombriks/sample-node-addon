@@ -1,6 +1,4 @@
-
 // src/counter.cc
-#include <iostream>
 
 #include "counter.hh"
 

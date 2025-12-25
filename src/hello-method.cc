@@ -1,6 +1,5 @@
 // hello-method.cc
 #include <node.h>
-#include <string>
 
 // function prototype, could be a header file
 std::string hello();
