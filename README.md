@@ -29,12 +29,14 @@ Set the content of the `binding.gyp` file:
 {
   "targets": [
     {
-      "target_name": "sample-node-addon",
+      "target_name": "sample_node_addon",
       "sources": [ "src/main.cc" ]
     }
   ]
 }
 ```
+
+_the target name must not contain '-'._
 
 Once node dependencies are set, you're good to `configure`:
 
