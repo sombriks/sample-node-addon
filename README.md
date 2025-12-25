@@ -20,6 +20,10 @@ mkdir src lib test
 touch src/main.cc
 touch src/hello.cc
 touch src/hello-method.cc
+touch src/counter.hh
+touch src/counter.cc
+touch src/counter-object.hh
+touch src/counter-object.cc 
 touch lib/main.js
 touch test/main.spec.js
 touch binding.gyp
@@ -29,12 +33,18 @@ Set the content of the `binding.gyp` file:
 
 ```json
 {
-  "targets": [
-    {
-      "target_name": "sample_node_addon",
-      "sources": [ "src/main.cc" ]
-    }
-  ]
+    "targets": [
+        {
+            "target_name": "sample_node_addon",
+            "cflags": ["-std=c++20"],
+            "sources": [
+                "src/counter.cc",
+                "src/hello-method.cc",
+                "src/hello.cc",
+                "src/main.cc"
+            ]
+        }
+    ]
 }
 ```
 
@@ -46,115 +56,90 @@ Once node dependencies are set, you're good to `configure`:
 npx node-gyp configure
 ```
 
-## Functions
+## Objects
 
-Once the entrypoint for the module is configured, we can add our functions into it.
+In a similar way to native functions, you cn define native objects, wrap them
+using the node addon api and do stuff in the javascript side.
 
-Let's start with this simple, C++20 compatible  _hello world_:
-
-```cpp
-// hello.cc
-#include <string>
-
-std::string hello() 
-{
-  return std::string("hello world!");
-}
-```
-
-In order to consume it, you must wrap the call into a node method:
+This simple example defines a counter object, featuring private state and public
+methods:
 
 ```cpp
-// hello-method.cc
-#include <node.h>
-#include <string>
+// src/counter.hh
+#ifndef COUNTER_HH
+#define COUNTER_HH
 
-// function prototype, could be a header file
-std::string hello();
-
-void HelloMethod(const v8::FunctionCallbackInfo<v8::Value> &args)
+class Counter
 {
-  v8::Isolate *isolate = args.GetIsolate();
-  args.GetReturnValue()
-      .Set(v8::String::NewFromUtf8(isolate, hello().c_str()).ToLocalChecked());
-}
+private:
+  int count;
+
+public:
+  Counter();
+  Counter(int);
+  ~Counter();
+  void increment();
+  void decrement();
+  int getCount();
+};
+#endif // COUNTER_HH
 ```
 
-And finally, register the method into the module:
+And the implementation:
 
 ```cpp
-// main.cc
-#include <node.h>
+// src/counter.cc
+#include <iostream>
 
-// function prototype, can reside into a header file
-void HelloMethod(const v8::FunctionCallbackInfo<v8::Value> &);
+#include "counter.hh"
 
-void Initialize(v8::Local<v8::Object> exports)
-{  
-  NODE_SET_METHOD(exports, "hello", HelloMethod);
-}
-
-NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)
-```
-
-And this is all the code needed to call C++ code from node.
-
-But a few more steps remain.
-
-### Update `bindings.gyp`
-
-```json
+Counter::Counter() : count(0)
 {
-    "targets": [
-        {
-            "target_name": "sample_node_addon",
-            "cflags": ["-std=c++20"],
-            "sources": [
-              "src/hello-method.cc",
-              "src/hello.cc", 
-              "src/main.cc"
-            ]
-        }
-    ]
+  std::cout << "Counter initialized to zero." << std::endl;
+}
+
+Counter::Counter(int initial) : count(initial)
+{
+  std::cout << "Counter initialized to " << initial << "." << std::endl;
+}
+
+Counter::~Counter()
+{
+  std::cout << "Counter destroyed." << std::endl;
+}
+
+void Counter::increment()
+{
+  ++count;
+  std::cout << "Counter incremented to " << count << "." << std::endl;
+}
+
+void Counter::decrement()
+{
+  --count;
+  std::cout << "Counter decremented to " << count << "." << std::endl;
+}
+
+int Counter::getCount()
+{
+  std::cout << "Current counter value: " << count << "." << std::endl;
+  return count;
 }
 ```
 
-You must list all your source files.
+Like you did with the function, you must wrap your counter using the node addon
+API:
 
-You can also define some compiler flags.
+```cpp
+// src/counter-object.cc
 
-Next, clean upm configure and build:
-
-```bash
-npx node-gyp clean
-npx node-gyp configure
-npx node-gyp build
 ```
 
-### Call your hello world
+Then registry the wrapper in the module:
 
-In `lib/main.js` make the magic happen:
+```cpp
+//src/main.cc
 
-```javascript
-// lib/main.js
-import bindings from "bindings";
-
-const addon = bindings("sample_node_addon");
-
-console.log("addon.hello():", addon.hello());
-```
-
-Before finally run, make sure you have enabled the `import module` style on the
-project:
-
-```bash
-npm pkg set type="module"
-```
-
-Finally, call the hello world:
-
-```bash
-node lib/main.js
 ```
 
 ## Further reading
