@@ -95,8 +95,61 @@ void Initialize(v8::Local<v8::Object> exports)
 NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)
 ```
 
+And this is all the code needed to call C++ code from node.
+
+But a few more steps remain.
+
+### Update `bindings.gyp`
+
+```json
+{
+    "targets": [
+        {
+            "target_name": "sample_node_addon",
+            "cflags": ["-std=c++20"],
+            "sources": [
+              "src/hello-method.cc",
+              "src/hello.cc", 
+              "src/main.cc"
+            ]
+        }
+    ]
+}
+```
+
+You must list all your source files.
+
+You can also define some compiler flags.
+
+### Call your hello world
+
+In `lib/main.js` make the magic happen:
+
+```javascript
+// lib/main.js
+import bindings from "bindings";
+
+const addon = bindings("sample_node_addon");
+
+console.log("addon.hello():", addon.hello());
+```
+
+Before finally run, make sure you have enabled the `import module` style on the
+project:
+
+```bash
+npm pkg set type="module"
+```
+
+Finally, call the hello world:
+
+```bash
+node lib/main.js
+```
+
 ## Further reading
 
 - [Node Addons API](https://nodejs.org/api/addons.html)
 - [Modern C++](https://github.com/federico-busato/Modern-CPP-Programming)
+- [Mode module system](https://nodejs.org/api/packages.html)
 -

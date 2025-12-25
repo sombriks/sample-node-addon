@@ -1,6 +1,7 @@
 {
   "name": "sample-node-addon",
   "version": "1.0.0",
+  "type": "module",
   "description": "sample code exploring distinct scenarios of the C++ / javascript bridge in the node runtime",
   "main": "index.js",
   "scripts": {
