@@ -44,15 +44,9 @@ Once node dependencies are set, you're good to `configure`:
 npx node-gyp configure
 ```
 
-## How to build
+## Functions
 
-Check the project branches, so you can see how small and big things are made
-using C++ native code and node.
-
-- basic boilerplate
-- functions
-- objects
-- callbacks
+Once the entrypoint for the module is configured, we can add our functions into it.
 
 ## Further reading
 
