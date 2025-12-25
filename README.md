@@ -53,6 +53,7 @@ using C++ native code and node.
 - functions
 - objects
 - callbacks
+- threads
 - tests
 - docs
 
