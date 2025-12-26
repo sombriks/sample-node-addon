@@ -49,13 +49,12 @@ npx node-gyp configure
 Check the project branches, so you can see how small and big things are made
 using C++ native code and node.
 
-- basic boilerplate
-- functions
-- objects
-- tests
+- [basic boilerplate](https://github.com/sombriks/sample-node-addon/tree/basic-boilerplate)
+- [functions](https://github.com/sombriks/sample-node-addon/tree/functions)
+- [objects](https://github.com/sombriks/sample-node-addon/tree/objects)
+- [tests](https://github.com/sombriks/sample-node-addon/tree/tests)
+- threads / callbacks
 - docs
-- threads
-- callbacks
 
 ## Further reading
 
