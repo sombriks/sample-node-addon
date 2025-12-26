@@ -108,6 +108,17 @@ npx ava
 
 Of course, you can save it as a npm script in `package.json`.
 
+### Should i test the native side as well?
+
+Short answer is yes.
+
+But to proper have this setup, the node gyp project alone won't be enough, so
+your project setup, which already involves three runtimes (C++ compiler, node
+runtime and python) will grow more in complexity.
+
+So, if you decide to cover the C++ side, try a test project, consuming the
+native library directly.
+
 ## Further reading
 
 - [Node Addons API](https://nodejs.org/api/addons.html)
