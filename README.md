@@ -52,10 +52,10 @@ using C++ native code and node.
 - basic boilerplate
 - functions
 - objects
-- callbacks
-- threads
 - tests
 - docs
+- threads
+- callbacks
 
 ## Further reading
 
