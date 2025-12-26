@@ -5,8 +5,9 @@
   "description": "sample code exploring distinct scenarios of the C++ / javascript bridge in the node runtime",
   "main": "index.js",
   "scripts": {
-    "configure": "node-gyp configure",
+    "test": "ava",
     "clean": "node-gyp clean",
+    "configure": "node-gyp configure",
     "build": "node-gyp build",
     "ccb": "node-gyp clean configure build"
   },

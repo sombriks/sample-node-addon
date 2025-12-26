@@ -61,6 +61,53 @@ npx node-gyp configure
 
 A decent test suite is the key for a high quality binding.
 
+First organize the function exports from main.js:
+
+```javascript
+// lib/main.js
+import bindings from "bindings";
+
+const addon = bindings("sample_node_addon");
+
+export const Counter = addon.Counter;
+
+export const hello = addon.hello;
+```
+
+Next, implement some tests:
+
+```javascript
+// test/main.spec.js
+import test from "ava"
+
+import { hello, Counter } from "../lib/main.js"
+
+test("Should get hello world", t => {
+  t.is(hello(), "hello world!")
+})
+
+test("Should create and use Counter", t => {
+  const counter = new Counter()
+  t.is(counter.getCount(), 0)
+  counter.increment()
+  t.is(counter.getCount(), 1)
+  counter.increment()
+  t.is(counter.getCount(), 2)
+  counter.decrement()
+  t.is(counter.getCount(), 1)
+})
+```
+
+Finally, in order to execute the tests, invoke
+[ava](https://github.com/avajs/ava), a modern and fast test runner I chose for
+this example:
+
+```bash
+npx ava
+```
+
+Of course, you can save it as a npm script in `package.json`.
+
 ## Further reading
 
 - [Node Addons API](https://nodejs.org/api/addons.html)
