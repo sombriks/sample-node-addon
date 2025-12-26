@@ -24,6 +24,9 @@ touch src/counter.hh
 touch src/counter.cc
 touch src/counter-object.hh
 touch src/counter-object.cc 
+touch src/sensor-sim.cc 
+touch src/sensor-sim-callback.cc
+touch src/sensor-sim-callback.hh
 touch lib/main.js
 touch test/main.spec.js
 touch binding.gyp
@@ -42,7 +45,9 @@ Set the content of the `binding.gyp` file:
                 "src/counter.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
-                "src/main.cc"
+                "src/main.cc",
+                "src/sensor-sim-callback.cc",
+                "src/sensor-sim.cc"
             ]
         }
     ]
@@ -57,67 +62,49 @@ Once node dependencies are set, you're good to `configure`:
 npx node-gyp configure
 ```
 
-## Tests
+## Threads and Callbacks
 
-A decent test suite is the key for a high quality binding.
+Asynchronous operations are one of the biggest powers of node. But when native
+code is asynchronous already, running in its own thread, you need extra steps.
 
-First organize the function exports from main.js:
+Take this sensor simulator as example:
 
-```javascript
-// lib/main.js
-import bindings from "bindings";
+```cpp
+// src/sensor-sim.cc
+#include <thread>
+#include <chrono>
+#include <random>
 
-const addon = bindings("sample_node_addon");
+void genData(void consumer(int data))
+{
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::mt19937 gen(seed);
+  std::uniform_int_distribution<int> dist(1, 100);
 
-export const Counter = addon.Counter;
+  int i = 12;
+  while (i-- > 0)
+  {
+    // Simulate data generation
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    consumer(dist(gen)); // Generate data in range [0, 99]
+  }
+}
 
-export const hello = addon.hello;
+void sensorWatch(void consumer(int data))
+{
+  std::thread dataThread(genData, consumer);
+  dataThread.join();
+}
 ```
 
-Next, implement some tests:
+When called, `sensorWatch` will report some random values through the `consumer`
+callback and then die.
 
-```javascript
-// test/main.spec.js
-import test from "ava"
+But all this is happening on another thread, so the wrapper will take the
+following shape:
 
-import { hello, Counter } from "../lib/main.js"
-
-test("Should get hello world", t => {
-  t.is(hello(), "hello world!")
-})
-
-test("Should create and use Counter", t => {
-  const counter = new Counter()
-  t.is(counter.getCount(), 0)
-  counter.increment()
-  t.is(counter.getCount(), 1)
-  counter.increment()
-  t.is(counter.getCount(), 2)
-  counter.decrement()
-  t.is(counter.getCount(), 1)
-})
+```cpp
 ```
-
-Finally, in order to execute the tests, invoke
-[ava](https://github.com/avajs/ava), a modern and fast test runner I chose for
-this example:
-
-```bash
-npx ava
-```
-
-Of course, you can save it as a npm script in `package.json`.
-
-### Should i test the native side as well?
-
-Short answer is yes.
-
-But to proper have this setup, the node gyp project alone won't be enough, so
-your project setup, which already involves three runtimes (C++ compiler, node
-runtime and python) will grow more in complexity.
-
-So, if you decide to cover the C++ side, try a test project, consuming the
-native library directly.
 
 ## Further reading
 
@@ -125,4 +112,5 @@ native library directly.
 - [Modern C++](https://github.com/federico-busato/Modern-CPP-Programming)
 - [Mode module system](https://nodejs.org/api/packages.html)
 - [V8 guide](https://v8docs.nodesource.com/node-22.4/)
+- [C++ threads](https://en.cppreference.com/w/cpp/thread/thread.html)
 -
