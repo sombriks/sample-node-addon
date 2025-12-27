@@ -1,5 +1,6 @@
 // src/heavy-calculation-async.cc
 #include <node.h>
+
 #include "heavy-calculation.hh"
 
 void HeavyCalculationAsync(const v8::FunctionCallbackInfo<v8::Value> &args)

@@ -5,9 +5,10 @@
 #include "counter-object.hh"
 
 // function prototypes here for didatic purposes
-void HelloMethod(const Nan::FunctionCallbackInfo<v8::Value> &info);
+void HelloMethod(const Nan::FunctionCallbackInfo<v8::Value> &);
 void HeavyCalculationSync(const v8::FunctionCallbackInfo<v8::Value> &);
 void HeavyCalculationAsync(const v8::FunctionCallbackInfo<v8::Value> &);
+void HeavyCalculationCallback(const Nan::FunctionCallbackInfo<v8::Value> &);
 
 void Initialize(v8::Local<v8::Object> exports)
 {
@@ -22,6 +23,12 @@ void Initialize(v8::Local<v8::Object> exports)
   CounterObject::Init(exports);
   NODE_SET_METHOD(exports, "heavyCalculationSync", HeavyCalculationSync);
   NODE_SET_METHOD(exports, "heavyCalculationAsync", HeavyCalculationAsync);
+
+  exports->Set(context,
+               Nan::New("heavyCalculationCallback").ToLocalChecked(),
+               Nan::New<v8::FunctionTemplate>(HeavyCalculationCallback)
+                   ->GetFunction(context)
+                   .ToLocalChecked());
 }
 
 NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)

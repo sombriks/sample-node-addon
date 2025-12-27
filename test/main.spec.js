@@ -1,7 +1,13 @@
 // test/main.spec.js
 import test from "ava"
 
-import { hello, Counter, heavyCalculationSync, heavyCalculationAsync } from "../lib/main.js"
+import {
+  hello,
+  Counter,
+  heavyCalculationSync,
+  heavyCalculationAsync,
+  heavyCalculationCallback
+} from "../lib/main.js"
 
 test("Should get hello world", t => {
   t.is(hello(), "hello world!")
@@ -36,4 +42,10 @@ test("Should perform a heavy calculation, promise + timeout", async t => {
 test("Should perform a heavy calculation, native promise", async t => {
   const value = await heavyCalculationAsync(15)
   t.is(value, 30)
+})
+
+test("Should perform a heavy calculation, native callback + promise", async t => {
+  const value = await new Promise(resolve =>
+    heavyCalculationCallback(21, resolve))
+  t.is(value, 42)
 })

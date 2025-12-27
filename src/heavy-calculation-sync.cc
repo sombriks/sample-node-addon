@@ -1,4 +1,6 @@
+// src/heavy-calculation-sync.cc
 #include <node.h>
+
 #include "heavy-calculation.hh"
 
 void HeavyCalculationSync(const v8::FunctionCallbackInfo<v8::Value> &args)
