@@ -3,6 +3,9 @@
         {
             "target_name": "sample_node_addon",
             "cflags": ["-std=c++20"],
+            "include_dirs" : [
+                "<!(node -e \"require('nan')\")"
+            ],
             "sources": [
                 "src/counter-object.cc",
                 "src/counter.cc",
