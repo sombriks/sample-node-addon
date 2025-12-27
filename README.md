@@ -63,7 +63,7 @@ Once node dependencies are set, you're good to `configure`:
 npx node-gyp configure
 ```
 
-## Threads and Callbacks
+## Async code
 
 Asynchronous operations are one of the biggest powers of node.
 Let start simple, let's say we want the result of a heavy calculation:
@@ -109,7 +109,7 @@ void HeavyCalculationSync(const v8::FunctionCallbackInfo<v8::Value> &args)
 }
 ```
 
-And could be tested like this:
+And it can be tested like this:
 
 ```javascript
 // test/main.spec.js
@@ -136,7 +136,7 @@ suite:
 
 Instead of just the heavy operation, **all operations got delayed**. This is
 because everything is running on
-[node's main event loop](https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick)..
+[node's main event loop](https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick).
 
 One first workaround for this is to schedule the execution using timers:
 
@@ -205,9 +205,10 @@ The test case gets simple again, but check out the times:
 ```
 
 One approach to really solve this is to dive even further into the v8 api,
-access [libuv](https://docs.libuv.org/en/v1.x/) api directly, adopt
-[nan](https://github.com/nodejs/nan) api or rewrite your addon entirely using
-the newer [napi](https://github.com/nodejs/nan).
+access [libuv](https://docs.libuv.org/en/v1.x/) api directly. Another option is
+to adopt [nan](https://github.com/nodejs/nan) api and build the async operations
+on top of it. Another approach is to rewrite your addon entirely using the newer
+[napi](https://nodejs.org/api/n-api.html).
 
 ## Further reading
 
