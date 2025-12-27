@@ -204,6 +204,11 @@ The test case gets simple again, but check out the times:
   ✔ Should perform a heavy calculation, promise + timeout (6s)
 ```
 
+One approach to really solve this is to dive even further into the v8 api,
+access [libuv](https://docs.libuv.org/en/v1.x/) api directly, adopt
+[nan](https://github.com/nodejs/nan) api or rewrite your addon entirely using
+the newer [napi](https://github.com/nodejs/nan).
+
 ## Further reading
 
 - [Node Addons API](https://nodejs.org/api/addons.html)
