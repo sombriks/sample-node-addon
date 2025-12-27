@@ -95,7 +95,9 @@ void HeavyCalculationSync(const v8::FunctionCallbackInfo<v8::Value> &args)
 
   if (args.Length() < 1 || !args[0]->IsNumber())
   {
-    isolate->ThrowException(v8::String::NewFromUtf8(isolate, "Argument must be a number").ToLocalChecked());
+    isolate
+      ->ThrowException(v8::String::NewFromUtf8(isolate, "Argument must be a number")
+      .ToLocalChecked());
     return;
   }
 
@@ -160,11 +162,46 @@ test("Should perform a heavy calculation, promise + timeout", async t => {
 While this approach seems to free the main loop from the big performance hit,
 the timers are still paying the price.
 
-A true solution would be to free the node's event loop of this burden. Let's
-check the async implementation of it:
+Let's return a promise natively and see what happens:
 
 ```cpp
 // src/heavy-calculation-async.cc
+#include <node.h>
+#include "heavy-calculation.hh"
+
+void HeavyCalculationAsync(const v8::FunctionCallbackInfo<v8::Value> &args)
+{
+  v8::Isolate *isolate = args.GetIsolate();
+
+  if (args.Length() < 1 || !args[0]->IsNumber())
+  {
+    isolate->ThrowException(v8::String::NewFromUtf8(isolate, "Argument must be a number").ToLocalChecked());
+    return;
+  }
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  // get the param
+  int n = args[0]->Int32Value(context).FromJust();
+  // prepare a promise
+  v8::Local<v8::Promise::Resolver> resolver = //
+    v8::Promise::Resolver::New(context).ToLocalChecked();
+  args.GetReturnValue().Set(resolver->GetPromise());
+  // do the heavy calculation
+  int result = heavyCalculation(n);
+  // resolve the promise
+  resolver
+      ->Resolve(context, v8::Integer::New(isolate, result))
+      .ToChecked();
+}
+```
+
+The test case gets simple again, but check out the times:
+
+```
+  ✔ Should get hello world (6s)
+  ✔ Should create and use Counter (6s)
+  ✔ Should perform a heavy calculation, synchronous (6s)
+  ✔ Should perform a heavy calculation, native promise (3s)
+  ✔ Should perform a heavy calculation, promise + timeout (6s)
 ```
 
 ## Further reading
