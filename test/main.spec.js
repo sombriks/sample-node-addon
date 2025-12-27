@@ -24,6 +24,11 @@ test("Should create and use Counter", t => {
   t.is(counter.getCount(), 1)
 })
 
+test("Should perform a heavy calculation, native callback + promise", async t => {
+  const value = await new Promise(resolve => heavyCalculationCallback(21, resolve))
+  t.is(value, 42)
+})
+
 test("Should perform a heavy calculation, synchronous", t => {
   const value = heavyCalculationSync(5)
   t.is(value, 10)
@@ -42,10 +47,4 @@ test("Should perform a heavy calculation, promise + timeout", async t => {
 test("Should perform a heavy calculation, native promise", async t => {
   const value = await heavyCalculationAsync(15)
   t.is(value, 30)
-})
-
-test("Should perform a heavy calculation, native callback + promise", async t => {
-  const value = await new Promise(resolve =>
-    heavyCalculationCallback(21, resolve))
-  t.is(value, 42)
 })

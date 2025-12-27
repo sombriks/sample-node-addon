@@ -1,6 +1,7 @@
 // src/heavy-calculation-callback.cc
 
 #include <nan.h>
+#include <thread>
 
 #include "heavy-calculation.hh"
 
@@ -18,8 +19,13 @@ void HeavyCalculationCallback(const Nan::FunctionCallbackInfo<v8::Value> &info)
 
   Nan::AsyncResource resource("nan:makeCallback");
 
-  int result = heavyCalculation(n);
+  auto worker = [n, cb, &resource]()
+  {
+    int result = heavyCalculation(n);
 
-  v8::Local<v8::Value> argv[] = {Nan::New(result)};
-  resource.runInAsyncScope(Nan::GetCurrentContext()->Global(), cb, 1, argv);
+    v8::Local<v8::Value> argv[] = {Nan::New(result)};
+    resource.runInAsyncScope(Nan::GetCurrentContext()->Global(), cb, 1, argv);
+  };
+
+  std::thread(worker).detach();
 }
