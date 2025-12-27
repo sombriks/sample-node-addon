@@ -27,6 +27,7 @@ touch src/counter-object.cc
 touch src/heavy-calculation.cc
 touch src/heavy-calculation-sync.cc
 touch src/heavy-calculation-async.cc
+touch src/heavy-calculation-callback.cc
 touch lib/main.js
 touch test/main.spec.js
 touch binding.gyp
@@ -44,6 +45,7 @@ Set the content of the `binding.gyp` file:
                 "src/counter-object.cc",
                 "src/counter.cc",
                 "src/heavy-calculation-async.cc",
+                "src/heavy-calculation-callback.cc",
                 "src/heavy-calculation-sync.cc",
                 "src/heavy-calculation.cc",
                 "src/hello-method.cc",
@@ -183,7 +185,6 @@ private:
   static void Increment(const Nan::FunctionCallbackInfo<v8::Value> &info);
   static void Decrement(const Nan::FunctionCallbackInfo<v8::Value> &info);
   static void GetCount(const Nan::FunctionCallbackInfo<v8::Value> &info);
-  static Nan::Persistent<v8::Function> constructor;
 
   ~CounterObject();
   explicit CounterObject();
@@ -199,8 +200,6 @@ Now the implementation:
 // src/counter-object.cc
 
 #include "counter-object.hh"
-
-Nan::Persistent<v8::Function> CounterObject::constructor;
 
 CounterObject::CounterObject()
 {
@@ -263,9 +262,17 @@ void CounterObject::Init(v8::Local<v8::Object> exports)
   Nan::SetPrototypeMethod(tpl, "increment", CounterObject::Increment);
   Nan::SetPrototypeMethod(tpl, "decrement", CounterObject::Decrement);
 
-  CounterObject::constructor.Reset(tpl->GetFunction(context).ToLocalChecked());
   exports->Set(context, name, tpl->GetFunction(context).ToLocalChecked());
 }
+```
+
+So far, adopt nan seems quite the same than use v8 api directly, apart from
+small simplifications, like the absence of `v8::Isolate` all around the code.
+
+But for our heavy calculation example there is a few advantages. For example, it
+is possible now to declare a callback version of the heavy calculation:
+
+```cpp
 ```
 
 ## Further reading

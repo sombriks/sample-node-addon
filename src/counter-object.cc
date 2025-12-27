@@ -2,8 +2,6 @@
 
 #include "counter-object.hh"
 
-Nan::Persistent<v8::Function> CounterObject::constructor;
-
 CounterObject::CounterObject()
 {
   counter = new Counter();
@@ -65,6 +63,5 @@ void CounterObject::Init(v8::Local<v8::Object> exports)
   Nan::SetPrototypeMethod(tpl, "increment", CounterObject::Increment);
   Nan::SetPrototypeMethod(tpl, "decrement", CounterObject::Decrement);
 
-  CounterObject::constructor.Reset(tpl->GetFunction(context).ToLocalChecked());
   exports->Set(context, name, tpl->GetFunction(context).ToLocalChecked());
 }

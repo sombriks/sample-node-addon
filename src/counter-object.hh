@@ -16,7 +16,6 @@ private:
   static void Increment(const Nan::FunctionCallbackInfo<v8::Value> &info);
   static void Decrement(const Nan::FunctionCallbackInfo<v8::Value> &info);
   static void GetCount(const Nan::FunctionCallbackInfo<v8::Value> &info);
-  static Nan::Persistent<v8::Function> constructor;
 
   ~CounterObject();
   explicit CounterObject();
