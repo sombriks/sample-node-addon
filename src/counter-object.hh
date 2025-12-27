@@ -2,21 +2,21 @@
 #ifndef COUNTER_OBJECT_HH
 #define COUNTER_OBJECT_HH
 
-#include <node.h>
-#include <node_object_wrap.h>
+#include <nan.h>
 
 #include "counter.hh"
 
-class CounterObject : public node::ObjectWrap
+class CounterObject : public Nan::ObjectWrap
 {
 public:
   static void Init(v8::Local<v8::Object> exports);
 
 private:
-  static void New(const v8::FunctionCallbackInfo<v8::Value> &args);
-  static void Increment(const v8::FunctionCallbackInfo<v8::Value> &args);
-  static void Decrement(const v8::FunctionCallbackInfo<v8::Value> &args);
-  static void GetCount(const v8::FunctionCallbackInfo<v8::Value> &args);
+  static void New(const Nan::FunctionCallbackInfo<v8::Value> &info);
+  static void Increment(const Nan::FunctionCallbackInfo<v8::Value> &info);
+  static void Decrement(const Nan::FunctionCallbackInfo<v8::Value> &info);
+  static void GetCount(const Nan::FunctionCallbackInfo<v8::Value> &info);
+  static Nan::Persistent<v8::Function> constructor;
 
   ~CounterObject();
   explicit CounterObject();
