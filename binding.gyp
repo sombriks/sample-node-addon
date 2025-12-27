@@ -6,11 +6,12 @@
             "sources": [
                 "src/counter-object.cc",
                 "src/counter.cc",
+                "src/heavy-calculation-async.cc",
+                "src/heavy-calculation-sync.cc",
+                "src/heavy-calculation.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
-                "src/main.cc",
-                "src/sensor-sim-callback.cc",
-                "src/sensor-sim.cc"
+                "src/main.cc"
             ]
         }
     ]

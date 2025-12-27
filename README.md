@@ -24,9 +24,9 @@ touch src/counter.hh
 touch src/counter.cc
 touch src/counter-object.hh
 touch src/counter-object.cc 
-touch src/sensor-sim.cc 
-touch src/sensor-sim-callback.cc
-touch src/sensor-sim-callback.hh
+touch src/heavy-calculation.cc
+touch src/heavy-calculation-sync.cc
+touch src/heavy-calculation-async.cc
 touch lib/main.js
 touch test/main.spec.js
 touch binding.gyp
@@ -43,11 +43,12 @@ Set the content of the `binding.gyp` file:
             "sources": [
                 "src/counter-object.cc",
                 "src/counter.cc",
+                "src/heavy-calculation-async.cc",
+                "src/heavy-calculation-sync.cc",
+                "src/heavy-calculation.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
-                "src/main.cc",
-                "src/sensor-sim-callback.cc",
-                "src/sensor-sim.cc"
+                "src/main.cc"
             ]
         }
     ]
@@ -64,44 +65,106 @@ npx node-gyp configure
 
 ## Threads and Callbacks
 
-Asynchronous operations are one of the biggest powers of node. But when native
-code is asynchronous already, running in its own thread, you need extra steps.
-
-Take this sensor simulator as example:
+Asynchronous operations are one of the biggest powers of node.
+Let start simple, let's say we want the result of a heavy calculation:
 
 ```cpp
-// src/sensor-sim.cc
-#include <thread>
+// src/heavy-calculation.cc
 #include <chrono>
-#include <random>
+#include <thread>
 
-void genData(void consumer(int data, void *userData), void *userData)
+int heavyCalculation(int n)
 {
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::mt19937 gen(seed);
-  std::uniform_int_distribution<int> dist(1, 100);
-
-  // Simulate data generation
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  int v = dist(gen);
-  consumer(v, userData); // Generate data in range [0, 99]
+  int result = n + n;
+  // wait for 3 second
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+  return result;
 }
-
-void sensorWatch(void consumer(int data, void *userData), void *userData)
-{
-  std::thread dataThread(genData, consumer, userData);
-  dataThread.detach();
-}
-
 ```
 
-When called, `sensorWatch` will report some random values through the `consumer`
-callback and then die.
-
-But all this is happening on another thread, so the wrapper will take the
-following shape:
+The synchronous approach would look like this:
 
 ```cpp
+// src/heavy-calculation-sync.cc
+#include <node.h>
+#include "heavy-calculation.hh"
+
+void HeavyCalculationSync(const v8::FunctionCallbackInfo<v8::Value> &args)
+{
+  v8::Isolate *isolate = args.GetIsolate();
+
+  if (args.Length() < 1 || !args[0]->IsNumber())
+  {
+    isolate->ThrowException(v8::String::NewFromUtf8(isolate, "Argument must be a number").ToLocalChecked());
+    return;
+  }
+
+  int n = args[0]->Int32Value(isolate->GetCurrentContext()).FromJust();
+
+  int result = heavyCalculation(n);
+
+  args.GetReturnValue().Set(v8::Integer::New(isolate, result));
+}
+```
+
+And could be tested like this:
+
+```javascript
+// test/main.spec.js
+import test from "ava"
+
+import { hello, Counter, heavyCalculationSync } from "../lib/main.js"
+
+// other test cases...
+
+test("Should perform a heavy calculation, synchronous", t => {
+  const value = heavyCalculationSync(5)
+  t.is(value, 10)
+})
+```
+
+Everything looks fine, until you notice something odd when running the test
+suite:
+
+```
+  ✔ Should get hello world (3s)
+  ✔ Should create and use Counter (3s)
+  ✔ Should perform a heavy calculation, synchronous (3s)
+```
+
+Instead of just the heavy operation, **all operations got delayed**. This is
+because everything is running on
+[node's main event loop](https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick)..
+
+One first workaround for this is to schedule the execution using timers:
+
+```javascript
+// test/main.spec.js
+import test from "ava"
+
+import { hello, Counter, heavyCalculationSync } from "../lib/main.js"
+
+// other test cases
+
+test("Should perform a heavy calculation, promise + timeout", async t => {
+  const value = await new Promise(resolve => {
+    setTimeout(() => {
+      const value = heavyCalculationSync(10)
+      resolve(value)
+    }, 100)
+  })
+  t.is(value, 20)
+})
+```
+
+While this approach seems to free the main loop from the big performance hit,
+the timers are still paying the price.
+
+A true solution would be to free the node's event loop of this burden. Let's
+check the async implementation of it:
+
+```cpp
+// src/heavy-calculation-async.cc
 ```
 
 ## Further reading
