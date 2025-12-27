@@ -18,9 +18,7 @@ test("Should create and use Counter", t => {
   t.is(counter.getCount(), 1)
 })
 
-test("Should watch sensor", t => {
-  watchSensor((value) => {
-    console.log(`Sensor value: ${value}`)
-    t.pass()
-  })
+test("Should watch sensor", async t => {
+  const value = await watchSensor()
+  t.true(typeof value === "number")
 })

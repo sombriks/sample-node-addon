@@ -75,26 +75,24 @@ Take this sensor simulator as example:
 #include <chrono>
 #include <random>
 
-void genData(void consumer(int data))
+void genData(void consumer(int data, void *userData), void *userData)
 {
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::mt19937 gen(seed);
   std::uniform_int_distribution<int> dist(1, 100);
 
-  int i = 12;
-  while (i-- > 0)
-  {
-    // Simulate data generation
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    consumer(dist(gen)); // Generate data in range [0, 99]
-  }
+  // Simulate data generation
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  int v = dist(gen);
+  consumer(v, userData); // Generate data in range [0, 99]
 }
 
-void sensorWatch(void consumer(int data))
+void sensorWatch(void consumer(int data, void *userData), void *userData)
 {
-  std::thread dataThread(genData, consumer);
-  dataThread.join();
+  std::thread dataThread(genData, consumer, userData);
+  dataThread.detach();
 }
+
 ```
 
 When called, `sensorWatch` will report some random values through the `consumer`

@@ -3,18 +3,8 @@
 #define SENSOR_SIM_CALLBACK_HH
 
 #include <iostream>
-#include <functional>
+#include <future>
 #include <node.h>
-#include <uv.h>
-
-struct AsyncData
-{
-  uv_async_t async;
-  v8::Persistent<v8::Function> callback;
-  v8::Persistent<v8::Context> context;
-  v8::Isolate* isolate_ptr;
-  int value;
-};
 
 void sensorWatch(void(int, void *), void *);
 

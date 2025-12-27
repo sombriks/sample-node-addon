@@ -2,7 +2,6 @@
 #include <thread>
 #include <chrono>
 #include <random>
-#include <iostream>
 
 void genData(void consumer(int data, void *userData), void *userData)
 {
@@ -13,12 +12,11 @@ void genData(void consumer(int data, void *userData), void *userData)
   // Simulate data generation
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   int v = dist(gen);
-  std::cout << "Generated data: " << v << std::endl;
   consumer(v, userData); // Generate data in range [0, 99]
 }
 
 void sensorWatch(void consumer(int data, void *userData), void *userData)
 {
   std::thread dataThread(genData, consumer, userData);
-  dataThread.join();
+  dataThread.detach();
 }
