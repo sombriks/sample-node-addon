@@ -353,4 +353,5 @@ For newer addons, check [napi](https://nodejs.org/api/n-api.html#node-api)
 - [Mode module system](https://nodejs.org/api/packages.html)
 - [V8 guide](https://v8docs.nodesource.com/node-22.4/)
 - [C++ threads](https://en.cppreference.com/w/cpp/thread/thread.html)
+- [NAN async worker](https://github.com/nodejs/node-addon-examples/blob/main/src/5-async-work/async_pi_estimate/nan/async.cc)
 -
