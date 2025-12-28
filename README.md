@@ -267,13 +267,84 @@ void CounterObject::Init(v8::Local<v8::Object> exports)
 ```
 
 So far, adopt nan seems quite the same than use v8 api directly, apart from
-small simplifications, like the absence of `v8::Isolate` all around the code.
+small simplifications, like the absence of `v8::Isolate`.
 
-But for our heavy calculation example there is a few advantages. For example, it
-is possible now to declare a callback version of the heavy calculation:
+But for our heavy calculation example, there is a great advantage. Nan offers
+the `Nan::AsyncQueueWorker` specifically for this scenarios.
+
+To get started with it, first declare a class extending `Nan::AsyncWorker`:
 
 ```cpp
+// src/heavy-calculation-callback.hh
+#ifndef HEAVY_CALCULATION_CALLBACK_HH
+#define HEAVY_CALCULATION_CALLBACK_HH
+
+#include <nan.h>
+
+void HeavyCalculationCallback(const Nan::FunctionCallbackInfo<v8::Value> &info);
+
+class HeavyCalculationWorker : public Nan::AsyncWorker
+{
+public:
+  HeavyCalculationWorker(int n, Nan::Callback *callback)
+      : Nan::AsyncWorker(callback), n(n), result(0) {}
+
+  void Execute() override;
+  void HandleOKCallback() override;
+
+private:
+  int n;
+  int result;
+};
+
+#endif // HEAVY_CALCULATION_CALLBACK_HH
 ```
+
+Then the implementation goes like this:
+
+```cpp
+// src/heavy-calculation-callback.cc
+
+#include "heavy-calculation.hh"
+
+#include "heavy-calculation-callback.hh"
+
+void HeavyCalculationCallback(const Nan::FunctionCallbackInfo<v8::Value> &info)
+{
+  int n = info[0].As<v8::Number>()->Value();
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+
+  Nan::Callback *callback = new Nan::Callback(cb);
+  HeavyCalculationWorker *worker = new HeavyCalculationWorker(n, callback);
+  Nan::AsyncQueueWorker(worker);
+}
+
+void HeavyCalculationWorker::Execute()
+{
+  result = heavyCalculation(n);
+}
+
+void HeavyCalculationWorker::HandleOKCallback()
+{
+  Nan::HandleScope scope;
+
+  v8::Local<v8::Value> argv[] = {
+      Nan::New(result)};
+
+  callback->Call(1, argv, async_resource);
+}
+```
+
+And at last, the heavy operation is off the main thread of the event loop.
+
+### Nan versus pure node/v8
+
+The question is: does it worth the effort to include nan in my addon project?
+
+The answer is yes. If you already have a project using classic node addon api,
+consuming pure v8.
+
+For newer addons, check [napi](https://nodejs.org/api/n-api.html#node-api)
 
 ## Further reading
 
