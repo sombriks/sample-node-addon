@@ -27,6 +27,7 @@ touch src/counter-object.cc
 touch src/heavy-calculation.cc
 touch src/heavy-calculation-callback.cc
 touch src/sensor-sim.cc
+touch src/sensor-sim-monitor.cc
 touch lib/main.js
 touch test/main.spec.js
 touch binding.gyp
@@ -48,6 +49,7 @@ Set the content of the `binding.gyp` file:
                 "src/hello-method.cc",
                 "src/hello.cc",
                 "src/main.cc",
+                "src/sensor-sim-monitor.cc",
                 "src/sensor-sim.cc"
             ]
         }
@@ -102,6 +104,7 @@ Next, modify the `binding.gyp`:
                 "src/hello-method.cc",
                 "src/hello.cc",
                 "src/main.cc",
+                "src/sensor-sim-monitor.cc",
                 "src/sensor-sim.cc"
             ]
         }
@@ -377,12 +380,13 @@ Consider this sensor simulator:
 #include <thread>
 #include <chrono>
 #include <random>
+#include <iostream>
 #include <functional>
 
 class SensorSim
 {
   public:
-    SensorSim(std::function<void(const int)> &dataCallback);
+    SensorSim(std::function<void(const int)> &);
     ~SensorSim();
     void start();
     void stop();
@@ -402,18 +406,20 @@ This one is different. It has its own thread, controls its own execution:
 #include "sensor-sim.hh"
 
 SensorSim::SensorSim(std::function<void(const int)> &dataCallback)
+    : dataCallback(dataCallback), running(false)
 {
-  this->dataCallback = dataCallback;
-  this->running = false;
+  std::cout << "SensorSim created" << std::endl;
 }
 
 SensorSim::~SensorSim()
 {
   stop();
+  std::cout << "SensorSim destroyed" << std::endl;
 }
 
 void SensorSim::start()
 {
+  std::cout << "SensorSim starting..." << std::endl;
   this->running = true;
   unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::mt19937 engine(seed);
@@ -424,8 +430,8 @@ void SensorSim::start()
     while (this->running)
     {
       int random_num = dist(engine);
-
       std::this_thread::sleep_for(std::chrono::milliseconds(random_num));
+      std::cout << "SensorSim generated data: " << random_num << std::endl;
       this->dataCallback(random_num);
     }
   };
@@ -435,6 +441,7 @@ void SensorSim::start()
 
 void SensorSim::stop()
 {
+  std::cout << "SensorSim stopping..." << std::endl;
   this->running = false;
 }
 ```

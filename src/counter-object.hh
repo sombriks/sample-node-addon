@@ -9,8 +9,8 @@
 class CounterObject : public Napi::ObjectWrap<CounterObject>
 {
 public:
-  static void Init(Napi::Env env, Napi::Object exports);
-  CounterObject(const Napi::CallbackInfo &info);
+  static void Init(Napi::Env env, Napi::Object);
+  CounterObject(const Napi::CallbackInfo &);
   ~CounterObject();
 
 private:

@@ -16,6 +16,7 @@
                 "src/hello-method.cc",
                 "src/hello.cc",
                 "src/main.cc",
+                "src/sensor-sim-monitor.cc",
                 "src/sensor-sim.cc"
             ]
         }

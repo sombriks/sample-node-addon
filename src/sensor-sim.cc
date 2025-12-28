@@ -2,32 +2,35 @@
 
 #include "sensor-sim.hh"
 
-SensorSim::SensorSim(std::function<void(const int)> &dataCallback)
+SensorSim::SensorSim() : running(false)
 {
-  this->dataCallback = dataCallback;
-  this->running = false;
+  std::cout << "SensorSim created" << std::endl;
 }
 
 SensorSim::~SensorSim()
 {
   stop();
+  std::cout << "SensorSim destroyed" << std::endl;
 }
 
-void SensorSim::start()
+void SensorSim::start(std::function<void(const int)> dataCallback)
 {
+  if (this->running)
+    return;
+  std::cout << "SensorSim starting..." << std::endl;
   this->running = true;
   unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::mt19937 engine(seed);
   std::uniform_int_distribution<int> dist(50, 250);
 
-  auto sim = [this, &dist, &engine]()
+  auto sim = [this, &dataCallback, &dist, &engine]()
   {
     while (this->running)
     {
       int random_num = dist(engine);
-
       std::this_thread::sleep_for(std::chrono::milliseconds(random_num));
-      this->dataCallback(random_num);
+      std::cout << "SensorSim generated data: " << random_num << std::endl;
+      dataCallback(random_num);
     }
   };
 
@@ -36,5 +39,11 @@ void SensorSim::start()
 
 void SensorSim::stop()
 {
+  std::cout << "SensorSim stopping..." << std::endl;
   this->running = false;
+}
+
+bool SensorSim::isRunning()
+{
+  return this->running;
 }

@@ -5,19 +5,20 @@
 #include <thread>
 #include <chrono>
 #include <random>
+#include <iostream>
 #include <functional>
 
 class SensorSim
 {
 public:
-  SensorSim(std::function<void(const int)> &dataCallback);
+  SensorSim();
   ~SensorSim();
-  void start();
+  void start(std::function<void(const int)>);
   void stop();
+  bool isRunning();
 
 private:
   bool running;
-  std::function<void(const int)> &dataCallback;
 };
 
 #endif // SENSOR_SIM_HH
