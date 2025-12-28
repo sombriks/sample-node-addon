@@ -55,7 +55,7 @@ using C++ native code and node.
 - [tests](https://github.com/sombriks/sample-node-addon/tree/tests)
 - [async code](https://github.com/sombriks/sample-node-addon/tree/async-code)
 - [nan addon](https://github.com/sombriks/sample-node-addon/tree/nan-addon)
-- napi
+- [napi addon](https://github.com/sombriks/sample-node-addon/tree/napi-addon)
 - docs
 
 ## Further reading
