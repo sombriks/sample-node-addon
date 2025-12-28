@@ -3,6 +3,11 @@
         {
             "target_name": "sample_node_addon",
             "cflags": ["-std=c++20"],
+            "cflags!": ["-fno-exceptions"],
+            "cflags_cc!": ["-fno-exceptions"],
+            "include_dirs": [
+                "<!@(node -p \"require('node-addon-api').include\")"
+            ],
             "sources": [
                 "src/counter-object.cc",
                 "src/counter.cc",

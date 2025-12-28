@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/sombriks/sample-node-addon#readme",
   "dependencies": {
-    "bindings": "^1.5.0"
+    "bindings": "^1.5.0",
+    "node-addon-api": "^8.5.0"
   },
   "devDependencies": {
     "ava": "^6.4.1",

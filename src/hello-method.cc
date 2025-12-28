@@ -1,12 +1,11 @@
 // hello-method.cc
-#include <node.h>
+
+#include <napi.h>
 
 // function prototype, could be a header file
 std::string hello();
 
-void HelloMethod(const v8::FunctionCallbackInfo<v8::Value> &args)
+Napi::Value HelloMethod(const Napi::CallbackInfo &info)
 {
-  v8::Isolate *isolate = args.GetIsolate();
-  args.GetReturnValue()
-      .Set(v8::String::NewFromUtf8(isolate, hello().c_str()).ToLocalChecked());
+  return Napi::String::New(info.Env(), hello());
 }

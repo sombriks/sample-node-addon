@@ -1,19 +1,13 @@
 // src/main.cc
 
-#include <node.h>
-#include "counter-object.hh"
+#include <napi.h>
 
 // function prototypes here for didatic purposes
-void HelloMethod(const v8::FunctionCallbackInfo<v8::Value> &);
-void HeavyCalculationSync(const v8::FunctionCallbackInfo<v8::Value> &);
-void HeavyCalculationAsync(const v8::FunctionCallbackInfo<v8::Value> &);
+Napi::Value HelloMethod(const Napi::CallbackInfo &);
 
-void Initialize(v8::Local<v8::Object> exports)
-{
-  NODE_SET_METHOD(exports, "hello", HelloMethod);
-  CounterObject::Init(exports);
-  NODE_SET_METHOD(exports, "heavyCalculationSync", HeavyCalculationSync);
-  NODE_SET_METHOD(exports, "heavyCalculationAsync", HeavyCalculationAsync);
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  exports.Set(Napi::String::New(env, "hello"), Napi::Function::New(env, HelloMethod));
+  return exports;
 }
 
-NODE_MODULE(NODE_GYP_MODULE_NAME, Initialize)
+NODE_API_MODULE(addon, Init)
