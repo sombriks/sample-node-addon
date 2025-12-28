@@ -25,8 +25,8 @@ touch src/counter.cc
 touch src/counter-object.hh
 touch src/counter-object.cc 
 touch src/heavy-calculation.cc
-touch src/heavy-calculation-sync.cc
-touch src/heavy-calculation-async.cc
+touch src/heavy-calculation-callback.cc
+touch src/sensor-sim.cc
 touch lib/main.js
 touch test/main.spec.js
 touch binding.gyp
@@ -43,8 +43,7 @@ Set the content of the `binding.gyp` file:
             "sources": [
                 "src/counter-object.cc",
                 "src/counter.cc",
-                "src/heavy-calculation-async.cc",
-                "src/heavy-calculation-sync.cc",
+                "src/heavy-calculation-callback.cc",
                 "src/heavy-calculation.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
@@ -97,8 +96,7 @@ Next, modify the `binding.gyp`:
             "sources": [
                 "src/counter-object.cc",
                 "src/counter.cc",
-                "src/heavy-calculation-async.cc",
-                "src/heavy-calculation-sync.cc",
+                "src/heavy-calculation-callback.cc",
                 "src/heavy-calculation.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
@@ -259,6 +257,129 @@ NODE_API_MODULE(addon, Init)
 ```
 
 Finally, our callback version for the heavy operation goes like this:
+
+```cpp
+// src/heavy-calculation-callback.hh
+
+#ifndef HEAVY_CALCULATION_CALLBACK_HH
+#define HEAVY_CALCULATION_CALLBACK_HH
+
+#include <napi.h>
+
+class HeavyCalculationWorker : public Napi::AsyncWorker
+{
+public:
+  HeavyCalculationWorker(Napi::Function &callback, int n);
+  void Execute() override;
+  void OnOK() override;
+
+private:
+  int n;
+  int result;
+};
+
+// function signature
+Napi::Value HeavyCalculationCallback(const Napi::CallbackInfo &);
+
+#endif // HEAVY_CALCULATION_CALLBACK_HH
+```
+
+Implementation goes like this:
+
+```cpp
+// src/heavy-calculation-callback.cc
+
+#include "heavy-calculation.hh"
+
+#include "heavy-calculation-callback.hh"
+
+HeavyCalculationWorker::HeavyCalculationWorker(Napi::Function &callback, int n)
+    : Napi::AsyncWorker(callback)
+{
+  this->n = n;
+  this->result = 0;
+}
+
+void HeavyCalculationWorker::Execute()
+{
+  this->result = heavyCalculation(this->n);
+}
+
+void HeavyCalculationWorker::OnOK()
+{
+  Napi::HandleScope scope(Env());
+  Callback().Call({Napi::Number::New(Env(), this->result)});
+}
+
+Napi::Value HeavyCalculationCallback(const Napi::CallbackInfo &info)
+{
+  Napi::Env env = info.Env();
+
+  int n = info[0].As<Napi::Number>().Int32Value();
+  Napi::Function callback = info[1].As<Napi::Function>();
+
+  HeavyCalculationWorker *worker = new HeavyCalculationWorker(callback, n);
+  worker->Queue();
+
+  return env.Undefined();
+}
+```
+
+Function can be registered in the entry point pretty much like how you already
+did with previous examples and _voilá_, heavywork offloaded from main thread.
+
+To test if it is really off the main thread, test it like this:
+
+```javascript
+// test/main.spec.js
+import test from "ava"
+
+import { hello, Counter, heavyCalculation } from "../lib/main.js"
+
+// other testcases
+
+test("Should perform a heavy calculation, native callback + promise", async t => {
+  const value = await Promise.all([
+    new Promise(resolve => heavyCalculation(15, resolve)), 
+    new Promise(resolve => heavyCalculation(21, resolve))
+  ])
+  t.like(value, [30, 42])
+})
+```
+
+since the heavy calculations will occur concurrently, execution time will not
+add up:
+
+```
+  ✔ Should get hello world
+  ✔ Should create and use Counter
+  ✔ Should perform a heavy calculation, native callback + promise (3s)
+```
+
+### The inverse path
+
+One cool feature of napi is the mechanism available to allow native threads to
+communicate with node event loop.
+
+our previous example offloads work, but still got all control over results.
+
+Napi has this neat api which allows to receive data from outside.
+
+Consider this sensor simulator:
+
+```cpp
+// src/sensor-sim.hh
+
+```
+
+### When use napi over vanilla v8 or nan?
+
+Short answer is: whenever possible.
+
+In a greenfield project, go strait with NAPI.
+
+Only rely on nan or bare v8 if you're dealing with node versions older than 8 or
+if the already existing codebase is already too much tied to v8.
 
 ## Further reading
 
