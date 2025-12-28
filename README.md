@@ -47,7 +47,8 @@ Set the content of the `binding.gyp` file:
                 "src/heavy-calculation.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
-                "src/main.cc"
+                "src/main.cc",
+                "src/sensor-sim.cc"
             ]
         }
     ]
@@ -100,7 +101,8 @@ Next, modify the `binding.gyp`:
                 "src/heavy-calculation.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
-                "src/main.cc"
+                "src/main.cc",
+                "src/sensor-sim.cc"
             ]
         }
     ]
@@ -368,7 +370,82 @@ Napi has this neat api which allows to receive data from outside.
 Consider this sensor simulator:
 
 ```cpp
-// src/sensor-sim.hh
+#ifndef SENSOR_SIM_HH
+#define SENSOR_SIM_HH
+
+#include <string>
+#include <thread>
+#include <chrono>
+#include <random>
+#include <functional>
+
+class SensorSim
+{
+  public:
+    SensorSim(std::function<void(const int)> &dataCallback);
+    ~SensorSim();
+    void start();
+    void stop();
+  private:
+    bool running;
+    std::function<void(const int)> &dataCallback;
+};
+
+#endif // SENSOR_SIM_HH
+```
+
+This one is different. It has its own thread, controls its own execution:
+
+```cpp
+// src/sensor-sim.cc
+
+#include "sensor-sim.hh"
+
+SensorSim::SensorSim(std::function<void(const int)> &dataCallback)
+{
+  this->dataCallback = dataCallback;
+  this->running = false;
+}
+
+SensorSim::~SensorSim()
+{
+  stop();
+}
+
+void SensorSim::start()
+{
+  this->running = true;
+  unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::mt19937 engine(seed);
+  std::uniform_int_distribution<int> dist(50, 250);
+
+  auto sim = [this, &dist, &engine]()
+  {
+    while (this->running)
+    {
+      int random_num = dist(engine);
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(random_num));
+      this->dataCallback(random_num);
+    }
+  };
+
+  std::thread(sim).detach();
+}
+
+void SensorSim::stop()
+{
+  this->running = false;
+}
+```
+
+So, the challenge is clear now. how to **monitor** values coming from
+**outside** the main event loop?
+
+Napi offers `Napi::ThreadSafeFunction` for such situations. Let's check the glue
+code to make it happen:
+
+```cpp
 
 ```
 
@@ -388,4 +465,5 @@ if the already existing codebase is already too much tied to v8.
 - [Mode module system](https://nodejs.org/api/packages.html)
 - [V8 guide](https://v8docs.nodesource.com/node-22.4/)
 - [C++ threads](https://en.cppreference.com/w/cpp/thread/thread.html)
+- [NAPI thread-safe functions](https://github.com/sombriks/node-addon-examples/blob/main/src/5-async-work/call-js-from-async-worker-execute/node-addon-api/src/binding.cc)
 -

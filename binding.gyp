@@ -15,7 +15,8 @@
                 "src/heavy-calculation.cc",
                 "src/hello-method.cc",
                 "src/hello.cc",
-                "src/main.cc"
+                "src/main.cc",
+                "src/sensor-sim.cc"
             ]
         }
     ]
