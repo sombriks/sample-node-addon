@@ -155,7 +155,110 @@ any other language capable of C bindings, not only C++.
 You can also use [CMake.js](https://napi.inspiredware.com/build-tools/cmake-js.html)
 instead node-gyp, but we'll take this journey on another day.
 
-### Objects, callbacks and more
+### Classes, callbacks and more
+
+The way of defining classes also got simpler. First the header:
+
+```cpp
+// src/counter-object.hh
+#ifndef COUNTER_OBJECT_HH
+#define COUNTER_OBJECT_HH
+
+#include <napi.h>
+
+#include "counter.hh"
+
+class CounterObject : public Napi::ObjectWrap<CounterObject>
+{
+public:
+  static void Init(Napi::Env env, Napi::Object exports);
+  CounterObject(const Napi::CallbackInfo &info);
+  ~CounterObject();
+
+private:
+  void Increment(const Napi::CallbackInfo &);
+  void Decrement(const Napi::CallbackInfo &);
+  Napi::Value GetCount(const Napi::CallbackInfo &);
+
+  Counter *counter;
+};
+
+#endif // COUNTER_OBJECT_HH
+```
+
+The implementation goes like this:
+
+```cpp
+// src/counter-object.cc
+
+#include "counter-object.hh"
+
+CounterObject::CounterObject(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<CounterObject>(info)
+{
+  counter = new Counter();
+}
+
+CounterObject::~CounterObject()
+{
+  delete counter;
+}
+
+Napi::Value CounterObject::GetCount(const Napi::CallbackInfo &info)
+{
+  return Napi::Number::New(info.Env(), counter->getCount());
+}
+
+void CounterObject::Decrement(const Napi::CallbackInfo &info)
+{
+  counter->decrement();
+}
+
+void CounterObject::Increment(const Napi::CallbackInfo &info)
+{
+  counter->increment();
+}
+
+void CounterObject::Init(Napi::Env env, Napi::Object exports)
+{
+  Napi::Function func = DefineClass(
+      env, "CounterObject",
+      {
+          CounterObject::InstanceMethod("increment", &CounterObject::Increment),
+          CounterObject::InstanceMethod("decrement", &CounterObject::Decrement),
+          CounterObject::InstanceMethod("getCount", &CounterObject::GetCount),
+      });
+
+  Napi::FunctionReference *constructor = new Napi::FunctionReference();
+  *constructor = Napi::Persistent(func);
+  env.SetInstanceData(constructor);
+
+  exports.Set("Counter", func);
+}
+```
+
+And it can be registered on the entry point pretty much like this:
+
+```cpp
+// src/main.cc
+
+#include <napi.h>
+
+#include "counter-object.hh"
+
+// function prototypes here for didatic purposes
+Napi::Value HelloMethod(const Napi::CallbackInfo &);
+
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  exports.Set(Napi::String::New(env, "hello"), Napi::Function::New(env, HelloMethod));
+  CounterObject::Init(env, exports);
+  return exports;
+}
+
+NODE_API_MODULE(addon, Init)
+```
+
+Finally, our callback version for the heavy operation goes like this:
 
 ## Further reading
 

@@ -2,24 +2,22 @@
 #ifndef COUNTER_OBJECT_HH
 #define COUNTER_OBJECT_HH
 
-#include <node.h>
-#include <node_object_wrap.h>
+#include <napi.h>
 
 #include "counter.hh"
 
-class CounterObject : public node::ObjectWrap
+class CounterObject : public Napi::ObjectWrap<CounterObject>
 {
 public:
-  static void Init(v8::Local<v8::Object> exports);
+  static void Init(Napi::Env env, Napi::Object exports);
+  CounterObject(const Napi::CallbackInfo &info);
+  ~CounterObject();
 
 private:
-  static void New(const v8::FunctionCallbackInfo<v8::Value> &args);
-  static void Increment(const v8::FunctionCallbackInfo<v8::Value> &args);
-  static void Decrement(const v8::FunctionCallbackInfo<v8::Value> &args);
-  static void GetCount(const v8::FunctionCallbackInfo<v8::Value> &args);
+  void Increment(const Napi::CallbackInfo &);
+  void Decrement(const Napi::CallbackInfo &);
+  Napi::Value GetCount(const Napi::CallbackInfo &);
 
-  ~CounterObject();
-  explicit CounterObject();
   Counter *counter;
 };
 
