@@ -19,7 +19,7 @@ test("Should create and use SensorSimMonitor", async t => {
       if (readings.length >= 3) {
         resolve()
       } else {
-        setTimeout(checkReadings, 4000)
+        setTimeout(checkReadings, 100)
       }
     }
   })

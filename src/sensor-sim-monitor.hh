@@ -21,24 +21,8 @@ private:
   void StopMonitoring(const Napi::CallbackInfo &);
   Napi::Value IsMonitoring(const Napi::CallbackInfo &);
 
+  void stop();
   SensorSim *sensorSim;
+  Napi::ThreadSafeFunction *tsfn;
 };
-
-/**
- * @brief async worker to handle the data produced by the sensor simulator.
- * must be created and discarded correctly during the lifetime of the javascript
- * object.
- */
-class SensorSimWorker : public Napi::AsyncWorker
-{
-public:
-  SensorSimWorker(Napi::Env env, Napi::Function &, SensorSim *);
-  ~SensorSimWorker();
-  void Execute() override;
-
-private:
-  SensorSim *sensorSim;
-  Napi::ThreadSafeFunction mon;
-};
-
 #endif // SENSOR_SIM_MONITOR_HH

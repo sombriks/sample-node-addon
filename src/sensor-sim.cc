@@ -19,16 +19,19 @@ void SensorSim::start(std::function<void(const int)> dataCallback)
     return;
   std::cout << "SensorSim starting..." << std::endl;
   this->running = true;
-  unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::mt19937 engine(seed);
-  std::uniform_int_distribution<int> dist(50, 250);
 
-  auto sim = [this, &dataCallback, &dist, &engine]()
+  auto sim = [this, dataCallback]()
   {
+    unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 engine(seed);
+    std::uniform_int_distribution<int> dist(50, 250);
+
+    std::cout << "SensorSim simulation thread started" << std::endl;
     while (this->running)
     {
+      std::cout << "SensorSim generating data..." << std::endl;
       int random_num = dist(engine);
-      std::this_thread::sleep_for(std::chrono::milliseconds(random_num));
+      std::this_thread::sleep_for(std::chrono::milliseconds(49));
       std::cout << "SensorSim generated data: " << random_num << std::endl;
       dataCallback(random_num);
     }
