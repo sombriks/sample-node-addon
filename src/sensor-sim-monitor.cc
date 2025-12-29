@@ -54,6 +54,9 @@ void SensorSimMonitor::StartMonitoring(const Napi::CallbackInfo &info)
     this->tsfn = new Napi::ThreadSafeFunction(Napi::ThreadSafeFunction::New(env, jsCallback, "SensorSimMonitor", 0, 1));
     auto dataCallback = [this](const int data)
     {
+      // are we stil alive?
+      if (this->tsfn == nullptr)
+        return;
       this->tsfn->BlockingCall(
           new int(data),
           [](Napi::Env env, Napi::Function jsCallback, int *data)
