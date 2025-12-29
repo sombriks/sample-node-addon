@@ -24,6 +24,7 @@ SensorSimMonitor::SensorSimMonitor(const Napi::CallbackInfo &info)
     : Napi::ObjectWrap<SensorSimMonitor>(info)
 {
   this->sensorSim = nullptr;
+  this->tsfn = nullptr;
 }
 
 SensorSimMonitor::~SensorSimMonitor()
@@ -53,17 +54,13 @@ void SensorSimMonitor::StartMonitoring(const Napi::CallbackInfo &info)
     this->tsfn = new Napi::ThreadSafeFunction(Napi::ThreadSafeFunction::New(env, jsCallback, "SensorSimMonitor", 0, 1));
     auto dataCallback = [this](const int data)
     {
-      napi_status status = this->tsfn->BlockingCall(
+      this->tsfn->BlockingCall(
           new int(data),
           [](Napi::Env env, Napi::Function jsCallback, int *data)
           {
             jsCallback.Call({Napi::Number::New(env, *data)});
             delete data;
           });
-      if (status != napi_ok)
-      {
-        // Handle error
-      }
     };
     this->sensorSim->start(dataCallback);
   }
@@ -86,5 +83,11 @@ void SensorSimMonitor::stop()
     this->sensorSim->stop();
     delete this->sensorSim;
     this->sensorSim = nullptr;
+  }
+  if (this->tsfn != nullptr)
+  {
+    this->tsfn->Release();
+    delete this->tsfn;
+    this->tsfn = nullptr;
   }
 }

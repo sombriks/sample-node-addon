@@ -31,7 +31,7 @@ void SensorSim::start(std::function<void(const int)> dataCallback)
     {
       std::cout << "SensorSim generating data..." << std::endl;
       int random_num = dist(engine);
-      std::this_thread::sleep_for(std::chrono::milliseconds(49));
+      std::this_thread::sleep_for(std::chrono::milliseconds(random_num));
       std::cout << "SensorSim generated data: " << random_num << std::endl;
       dataCallback(random_num);
     }
