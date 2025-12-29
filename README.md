@@ -385,14 +385,15 @@ Consider this sensor simulator:
 
 class SensorSim
 {
-  public:
-    SensorSim(std::function<void(const int)> &);
-    ~SensorSim();
-    void start();
-    void stop();
-  private:
-    bool running;
-    std::function<void(const int)> &dataCallback;
+public:
+  SensorSim();
+  ~SensorSim();
+  void start(std::function<void(const int)>);
+  void stop();
+  bool isRunning();
+
+private:
+  bool running;
 };
 
 #endif // SENSOR_SIM_HH
@@ -405,8 +406,7 @@ This one is different. It has its own thread, controls its own execution:
 
 #include "sensor-sim.hh"
 
-SensorSim::SensorSim(std::function<void(const int)> &dataCallback)
-    : dataCallback(dataCallback), running(false)
+SensorSim::SensorSim() : running(false)
 {
   std::cout << "SensorSim created" << std::endl;
 }
@@ -417,25 +417,58 @@ SensorSim::~SensorSim()
   std::cout << "SensorSim destroyed" << std::endl;
 }
 
-void SensorSim::start()
+void SensorSim::start(std::function<void(const int)> dataCallback)
 {
+  if (this->running)
+    return;
+    
   std::cout << "SensorSim starting..." << std::endl;
   this->running = true;
-  unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::mt19937 engine(seed);
-  std::uniform_int_distribution<int> dist(50, 250);
 
-  auto sim = [this, &dist, &engine]()
+  auto sim = [this, dataCallback]()
   {
+    unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 engine(seed);
+    std::uniform_int_distribution<int> dist(50, 250);
+
+    std::cout << "SensorSim simulation thread started" << std::endl;
     while (this->running)
     {
+      std::cout << "SensorSim generating data..." << std::endl;// src/sensor-sim-monitor.hh
+#ifndef SENSOR_SIM_MONITOR_HH
+#define SENSOR_SIM_MONITOR_HH
+
+#include <napi.h>
+
+#include "sensor-sim.hh"
+
+/**
+ * @brief basic wrapper class for the sensor simulator
+ */
+class SensorSimMonitor : public Napi::ObjectWrap<SensorSimMonitor>
+{
+public:
+  static void Init(Napi::Env env, Napi::Object);
+  SensorSimMonitor(const Napi::CallbackInfo &);
+  ~SensorSimMonitor();
+
+private:
+  void StartMonitoring(const Napi::CallbackInfo &);
+  void StopMonitoring(const Napi::CallbackInfo &);
+  Napi::Value IsMonitoring(const Napi::CallbackInfo &);
+
+  void stop();
+  SensorSim *sensorSim;
+  Napi::ThreadSafeFunction *tsfn;
+};
+#endif // SENSOR_SIM_MONITOR_HH
       int random_num = dist(engine);
       std::this_thread::sleep_for(std::chrono::milliseconds(random_num));
       std::cout << "SensorSim generated data: " << random_num << std::endl;
-      this->dataCallback(random_num);
+      dataCallback(random_num);
     }
   };
-
+  // spawn and forget
   std::thread(sim).detach();
 }
 
@@ -443,6 +476,11 @@ void SensorSim::stop()
 {
   std::cout << "SensorSim stopping..." << std::endl;
   this->running = false;
+}
+
+bool SensorSim::isRunning()
+{
+  return this->running;
 }
 ```
 
@@ -453,10 +491,164 @@ Napi offers `Napi::ThreadSafeFunction` for such situations. Let's check the glue
 code to make it happen:
 
 ```cpp
+// src/sensor-sim-monitor.hh
+#ifndef SENSOR_SIM_MONITOR_HH
+#define SENSOR_SIM_MONITOR_HH
 
+#include <napi.h>
+
+#include "sensor-sim.hh"
+
+/**
+ * @brief basic wrapper class for the sensor simulator
+ */
+class SensorSimMonitor : public Napi::ObjectWrap<SensorSimMonitor>
+{
+public:
+  static void Init(Napi::Env env, Napi::Object);
+  SensorSimMonitor(const Napi::CallbackInfo &);
+  ~SensorSimMonitor();
+
+private:
+  void StartMonitoring(const Napi::CallbackInfo &);
+  void StopMonitoring(const Napi::CallbackInfo &);
+  Napi::Value IsMonitoring(const Napi::CallbackInfo &);
+
+  void stop();
+  SensorSim *sensorSim;
+  Napi::ThreadSafeFunction *tsfn;
+};
+#endif // SENSOR_SIM_MONITOR_HH
 ```
 
-### When use napi over vanilla v8 or nan?
+The monitor must be capable of start and stop the native simulator. Here goes
+the implementation:
+
+```cpp
+// src/sensor-sim-monitor.cc
+
+#include "sensor-sim-monitor.hh"
+
+void SensorSimMonitor::Init(Napi::Env env, Napi::Object exports)
+{
+  Napi::Function func = DefineClass(
+      env,
+      "SensorSimMonitor",
+      {
+          InstanceMethod("startMonitoring", &SensorSimMonitor::StartMonitoring),
+          InstanceMethod("stopMonitoring", &SensorSimMonitor::StopMonitoring),
+          InstanceMethod("isMonitoring", &SensorSimMonitor::IsMonitoring),
+      });
+
+  Napi::FunctionReference *constructor = new Napi::FunctionReference();
+  *constructor = Napi::Persistent(func);
+  env.SetInstanceData(constructor);
+
+  exports.Set("SensorSimMonitor", func);
+}
+
+SensorSimMonitor::SensorSimMonitor(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<SensorSimMonitor>(info)
+{
+  this->sensorSim = nullptr;
+  this->tsfn = nullptr;
+}
+
+SensorSimMonitor::~SensorSimMonitor()
+{
+  this->stop();
+}
+
+Napi::Value SensorSimMonitor::IsMonitoring(const Napi::CallbackInfo &info)
+{
+  Napi::Env env = info.Env();
+  bool monitoring = false;
+  if (this->sensorSim != nullptr)
+  {
+    monitoring = this->sensorSim->isRunning();
+  }
+  return Napi::Boolean::New(env, monitoring);
+}
+
+void SensorSimMonitor::StartMonitoring(const Napi::CallbackInfo &info)
+{
+  Napi::Env env = info.Env();
+  Napi::Function jsCallback = info[0].As<Napi::Function>();
+
+  if (this->sensorSim == nullptr)
+  {
+    this->sensorSim = new SensorSim();
+    this->tsfn = new Napi::ThreadSafeFunction(Napi::ThreadSafeFunction::New(env, jsCallback, "SensorSimMonitor", 0, 1));
+    auto dataCallback = [this](const int data)
+    {
+      // are we stil alive?
+      if (this->tsfn == nullptr)
+        return;
+      this->tsfn->BlockingCall(
+          new int(data),
+          [](Napi::Env env, Napi::Function jsCallback, int *data)
+          {
+            jsCallback.Call({Napi::Number::New(env, *data)});
+            delete data;
+          });
+    };
+    this->sensorSim->start(dataCallback);
+  }
+  else
+  {
+    Napi::TypeError::New(env, "SensorSim is already running")
+        .ThrowAsJavaScriptException();
+  }
+}
+
+void SensorSimMonitor::StopMonitoring(const Napi::CallbackInfo &info)
+{
+  this->stop();
+}
+
+void SensorSimMonitor::stop()
+{
+  if (this->sensorSim != nullptr)
+  {
+    this->sensorSim->stop();
+    delete this->sensorSim;
+    this->sensorSim = nullptr;
+  }
+  if (this->tsfn != nullptr)
+  {
+    this->tsfn->Release();
+    delete this->tsfn;
+    this->tsfn = nullptr;
+  }
+}
+```
+
+Finally, the test can be written like this:
+
+```javascript
+// test/main.spec.js
+import test from "ava"
+
+import { hello, Counter, heavyCalculation, SensorSimMonitor } from "../lib/main.js"
+
+// other test cases
+
+test("Should create and use SensorSimMonitor", async t => {
+  const monitor = new SensorSimMonitor()
+  t.false(monitor.isMonitoring())
+  let readings = []
+  monitor.startMonitoring((reading) => {
+    console.log(`Received sensor reading: ${reading}`)
+    readings.push(reading)
+    if (readings.length >= 3) {
+      monitor.stopMonitoring()
+    }
+  })
+  t.true(monitor.isMonitoring())
+})
+```
+
+### When use napi over vanilla v8 or v8 + nan?
 
 Short answer is: whenever possible.
 

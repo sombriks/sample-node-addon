@@ -8,12 +8,13 @@ test("Should create and use SensorSimMonitor", async t => {
   t.false(monitor.isMonitoring())
   let readings = []
   monitor.startMonitoring((reading) => {
+    console.log(`Received sensor reading: ${reading}`)
     readings.push(reading)
     if (readings.length >= 3) {
       monitor.stopMonitoring()
     }
   })
-
+  t.true(monitor.isMonitoring())
 })
 
 test("Should get hello world", t => {

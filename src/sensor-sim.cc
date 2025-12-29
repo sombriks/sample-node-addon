@@ -17,6 +17,7 @@ void SensorSim::start(std::function<void(const int)> dataCallback)
 {
   if (this->running)
     return;
+    
   std::cout << "SensorSim starting..." << std::endl;
   this->running = true;
 
@@ -36,7 +37,7 @@ void SensorSim::start(std::function<void(const int)> dataCallback)
       dataCallback(random_num);
     }
   };
-
+  // spawn and forget
   std::thread(sim).detach();
 }
 
