@@ -640,7 +640,7 @@ test("Should create and use SensorSimMonitor", async t => {
   monitor.startMonitoring((reading) => {
     console.log(`Received sensor reading: ${reading}`)
     readings.push(reading)
-    if (readings.length >= 3) {
+    if (readings.length >= 10) {
       monitor.stopMonitoring()
     }
   })
